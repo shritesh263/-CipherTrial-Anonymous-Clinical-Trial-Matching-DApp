@@ -2,19 +2,47 @@
 
 @layer base {
   body {
-    background-color: #020617;
-    color: #f8fafc;
+    background-color: #101415;
+    color: #e0e3e5;
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Geist', 'Outfit', sans-serif;
   }
 
   code, pre {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'Geist', monospace;
   }
+}
+
+.glass-panel {
+  background: rgba(39, 42, 44, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-card {
+  background: rgba(39, 42, 44, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glow-secondary {
+  box-shadow: 0 0 15px #44e2cd;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(68, 226, 205, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(68, 226, 205, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(68, 226, 205, 0); }
+}
+
+.zk-pulse {
+  animation: pulseGlow 2s infinite;
 }
 
 @keyframes fadeIn {
@@ -52,14 +80,14 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #020617;
+  background: #101415;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #272a2c;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #323537;
 }

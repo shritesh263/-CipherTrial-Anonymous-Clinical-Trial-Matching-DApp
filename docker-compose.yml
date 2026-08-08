@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  proof-server:
+    image: midnightnetwork/proof-server:latest
+    container_name: midnight-proof-server
+    ports:
+      - "6300:6300"
+    environment:
+      - RUST_LOG=info
+      - NETWORK=preview
+    restart: unless-stopped
+
+  midnight-devnet:
+    image: midnightnetwork/devnet-node:latest
+    container_name: midnight-devnet-node
+    ports:
+      - "9944:9944"
+      - "9933:9933"
+    environment:
+      - CHAIN=preview
+    command: --dev --rpc-external --ws-external --rpc-cors all
+    restart: unless-stopped

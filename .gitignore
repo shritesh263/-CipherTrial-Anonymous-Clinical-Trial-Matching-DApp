@@ -29,3 +29,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.swp
+
+# Stitch Design Reference
+stitch_private_clinical_trial_matching/
