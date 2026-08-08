@@ -1,6 +1,6 @@
 # 🛡️ CipherTrial: Anonymous Clinical Trial Matching dApp (Midnight Health)
 
-[![CI/CD Pipeline](https://github.com/shritesh263/Stellar-Wallet-Connect/actions/workflows/ci.yml/badge.svg)](https://github.com/shritesh263/Stellar-Wallet-Connect/actions/workflows/ci.yml)
+[![CI/CD Pipeline](https://github.com/shritesh263/-CipherTrial-Anonymous-Clinical-Trial-Matching-DApp/actions/workflows/ci.yml/badge.svg)](https://github.com/shritesh263/-CipherTrial-Anonymous-Clinical-Trial-Matching-DApp/actions/workflows/ci.yml)
 [![Midnight Preprod](https://img.shields.io/badge/Midnight-Preprod%20Supported-7000FF?style=flat&logo=cardano)](https://midnight.network)
 [![Midnight Preview](https://img.shields.io/badge/Midnight-Preview%20Supported-00E5FF?style=flat&logo=cardano)](https://midnight.network)
 [![Compact ZK Smart Contracts](https://img.shields.io/badge/Smart%20Contracts-Compact%20v0.20-00F0FF)](contracts/clinical_trial.compact)
@@ -132,8 +132,8 @@ $$\text{Eligibility} = (A_{\text{patient}} \ge A_{\text{min}}) \land (A_{\text{p
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/shritesh263/Stellar-Wallet-Connect.git
-cd Stellar-Wallet-Connect
+git clone https://github.com/shritesh263/-CipherTrial-Anonymous-Clinical-Trial-Matching-DApp.git
+cd -CipherTrial-Anonymous-Clinical-Trial-Matching-DApp
 
 # Install dependencies
 npm install
