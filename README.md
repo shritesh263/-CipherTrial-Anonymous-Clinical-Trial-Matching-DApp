@@ -1,5 +1,6 @@
 # 🛡️ CipherTrial: Anonymous Clinical Trial Matching dApp (Midnight Health)
 
+[![Live dApp](https://img.shields.io/badge/Live%20dApp-Netlify-00C7B7?style=flat&logo=netlify)](https://superb-axolotl-638914.netlify.app/)
 [![CI/CD Pipeline](https://github.com/shritesh263/-CipherTrial-Anonymous-Clinical-Trial-Matching-DApp/actions/workflows/ci.yml/badge.svg)](https://github.com/shritesh263/-CipherTrial-Anonymous-Clinical-Trial-Matching-DApp/actions/workflows/ci.yml)
 [![Midnight Preprod](https://img.shields.io/badge/Midnight-Preprod%20Supported-7000FF?style=flat&logo=cardano)](https://midnight.network)
 [![Midnight Preview](https://img.shields.io/badge/Midnight-Preview%20Supported-00E5FF?style=flat&logo=cardano)](https://midnight.network)
@@ -7,6 +8,8 @@
 [![Vercel Ready](https://img.shields.io/badge/Vercel-Ready-000000?style=flat&logo=vercel)](vercel.json)
 [![Netlify Ready](https://img.shields.io/badge/Netlify-Ready-00C7B7?style=flat&logo=netlify)](netlify.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> 🚀 **Live Production dApp Deployment**: [https://superb-axolotl-638914.netlify.app/](https://superb-axolotl-638914.netlify.app/)
 
 **CipherTrial** (Midnight Health) is a privacy-preserving Decentralized Application (dApp) built on the **Midnight Blockchain** using the **Compact** smart contract programming language. 
 
@@ -73,6 +76,7 @@ $$\text{Eligibility} = (A_{\text{patient}} \ge A_{\text{min}}) \land (A_{\text{p
 
 ## ✨ Features & Stitch UI Modules
 
+- 🌐 **Live Netlify Deployment**: Access the dApp anytime at [https://superb-axolotl-638914.netlify.app/](https://superb-axolotl-638914.netlify.app/).
 - ⚡ **Dual Midnight Network Selector**: Seamlessly switch between **Preprod** and **Preview** networks via an interactive UI header dropdown.
 - 🎨 **Stitch Zero-Trust Medical Design**: Deep Midnight theme (`#101415`), Surgical White typography (Geist & Inter fonts), glassmorphism cards, and Material Symbols Outlined icons (`shield_person`, `shield_lock`, `verified_user`, `fingerprint`).
 - 🔎 **Clinical Trial Discovery Catalog**: Search and filter available clinical trials with ZK Private Match badges, age/location criteria, and private eligibility checkers.
@@ -201,21 +205,18 @@ npm run build
 
 CipherTrial is fully configured for zero-configuration, continuous deployment on **Vercel** and **Netlify**.
 
-### 1. Deploying on Vercel
-- **Automatic Deployment**: Import the GitHub repository into your Vercel Dashboard. Vercel automatically detects `vercel.json`, sets the framework to Vite, and builds to `dist`.
-- **CLI Deployment**:
-  ```bash
-  npm run deploy:vercel
-  ```
-
-### 2. Deploying on Netlify
-- **Automatic Deployment**: Import the repository into Netlify. Netlify reads `netlify.toml` and `public/_redirects` for Single Page App SPA routing.
-- **Build Settings**:
-  - **Build Command**: `npm run build`
-  - **Publish Directory**: `dist`
-- **CLI Deployment**:
+### 1. Live Netlify Deployment
+- **URL**: [https://superb-axolotl-638914.netlify.app/](https://superb-axolotl-638914.netlify.app/)
+- **CLI Command**:
   ```bash
   npm run deploy:netlify
+  ```
+
+### 2. Deploying on Vercel
+- **Automatic Deployment**: Import the GitHub repository into your Vercel Dashboard. Vercel automatically detects `vercel.json`, sets the framework to Vite, and builds to `dist`.
+- **CLI Command**:
+  ```bash
+  npm run deploy:vercel
   ```
 
 ---
@@ -224,6 +225,7 @@ CipherTrial is fully configured for zero-configuration, continuous deployment on
 
 | Requirement | Status | Details |
 | :--- | :---: | :--- |
+| **Live Production Link** | ✅ PASSED | [https://superb-axolotl-638914.netlify.app/](https://superb-axolotl-638914.netlify.app/) |
 | **Working MVP on Preprod** | ✅ PASSED | Multi-network preprod/preview configuration and RPC integrations |
 | **Verifiable Preprod Address** | ✅ PASSED | `0x7a3f891b2c4e5d6f7a8b9c0d1e2f3a4b5c6d7e8f` |
 | **Stitch UI Integration** | ✅ PASSED | Full Zero-Trust design system and trial matcher modules integrated |
