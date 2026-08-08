@@ -1,12 +1,14 @@
-# 🛡️ CipherTrial: Anonymous Clinical Trial Matching dApp
+# 🛡️ CipherTrial: Anonymous Clinical Trial Matching dApp (Midnight Health)
 
 [![CI/CD Pipeline](https://github.com/shritesh263/Stellar-Wallet-Connect/actions/workflows/ci.yml/badge.svg)](https://github.com/shritesh263/Stellar-Wallet-Connect/actions/workflows/ci.yml)
 [![Midnight Preprod](https://img.shields.io/badge/Midnight-Preprod%20Supported-7000FF?style=flat&logo=cardano)](https://midnight.network)
 [![Midnight Preview](https://img.shields.io/badge/Midnight-Preview%20Supported-00E5FF?style=flat&logo=cardano)](https://midnight.network)
-[![Compact ZK Smart Contracts](https://img.shields.io/badge/Smart%20Contracts-Compact%20v0.20-00F0FF)](file:///contracts/clinical_trial.compact)
+[![Compact ZK Smart Contracts](https://img.shields.io/badge/Smart%20Contracts-Compact%20v0.20-00F0FF)](contracts/clinical_trial.compact)
+[![Vercel Ready](https://img.shields.io/badge/Vercel-Ready-000000?style=flat&logo=vercel)](vercel.json)
+[![Netlify Ready](https://img.shields.io/badge/Netlify-Ready-00C7B7?style=flat&logo=netlify)](netlify.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**CipherTrial** is a privacy-preserving Decentralized Application (dApp) built on the **Midnight Blockchain** using the **Compact** smart contract programming language. 
+**CipherTrial** (Midnight Health) is a privacy-preserving Decentralized Application (dApp) built on the **Midnight Blockchain** using the **Compact** smart contract programming language. 
 
 CipherTrial empowers patients to anonymously prove eligibility for clinical research trials using **Zero-Knowledge (ZK) proofs** without disclosing sensitive personal health information (age, diagnosed ICD-10 conditions, current medications) on-chain or to trial sponsors.
 
@@ -28,9 +30,9 @@ CipherTrial features native multi-network configuration with real-time switching
 ```mermaid
 flowchart TB
     subgraph Client ["Client Browser (Off-Chain Confidential Environment)"]
-        UI["React + Vite UI"]
+        UI["React + Vite UI (Stitch Zero-Trust Theme)"]
         Witness["Private Patient Witness\n(Age, ICD-10 Condition, Meds)"]
-        Vault["Encrypted Local Storage Vault"]
+        Vault["Encrypted Local Witness Storage Vault"]
         Prover["Compact ZK Prover & Halo2 Engine"]
     end
 
@@ -69,9 +71,13 @@ $$\text{Eligibility} = (A_{\text{patient}} \ge A_{\text{min}}) \land (A_{\text{p
 
 ---
 
-## ✨ Features
+## ✨ Features & Stitch UI Modules
 
 - ⚡ **Dual Midnight Network Selector**: Seamlessly switch between **Preprod** and **Preview** networks via an interactive UI header dropdown.
+- 🎨 **Stitch Zero-Trust Medical Design**: Deep Midnight theme (`#101415`), Surgical White typography (Geist & Inter fonts), glassmorphism cards, and Material Symbols Outlined icons (`shield_person`, `shield_lock`, `verified_user`, `fingerprint`).
+- 🔎 **Clinical Trial Discovery Catalog**: Search and filter available clinical trials with ZK Private Match badges, age/location criteria, and private eligibility checkers.
+- 🤝 **ZK Channel Handshake Modal**: Interactive modal displaying Zero-Knowledge proof connection setup to Midnight Network with live percentage progress counter (0% ➔ 100%).
+- 📊 **Matched Trials Bento Dashboard**: Bento-style grid displaying percentage match scores (98% Match, 85% Match), compensation estimator (Est. $1,200 tDUST), and anonymous interest submission.
 - 🔐 **Zero-Knowledge Circuit Prover**: Local Halo2 ZK proof generation evaluated against Compact smart contract constraints.
 - 💼 **Multi-Wallet Abstraction**: Direct support for injected **Lace** and **1AM** Midnight wallet providers.
 - 📦 **Encrypted Local Witness Vault**: Patient data can be saved, locked, or purged locally in browser storage without cloud exposure.
@@ -90,16 +96,29 @@ $$\text{Eligibility} = (A_{\text{patient}} \ge A_{\text{min}}) \land (A_{\text{p
 │   ├── test-devnet.ts           # 11-step contract & ZK circuit test suite
 │   └── deploy-preview.ts        # Contract deployment script
 ├── src/
-│   ├── components/              # React UI components (Navbar, PatientView, SponsorDashboard, etc.)
+│   ├── components/              # React UI components (Navbar, AvailableTrialsView, MatchedTrialsView, etc.)
+│   │   ├── AvailableTrialsView.tsx
+│   │   ├── EstablishingChannelModal.tsx
+│   │   ├── MatchedTrialsView.tsx
+│   │   ├── Navbar.tsx
+│   │   ├── OptInModal.tsx
+│   │   ├── PatientView.tsx
+│   │   ├── ProofConfirmationView.tsx
+│   │   ├── SponsorDashboard.tsx
+│   │   └── WalletModal.tsx
 │   ├── config/                  # Midnight Preprod & Preview network definitions
 │   ├── contracts/               # Compact simulator & ZK circuit prover engine
 │   ├── providers/               # React Context (Midnight & Wallet Providers)
 │   └── wallet/                  # Lace & 1AM wallet adapters and registry
 ├── .github/
 │   └── workflows/ci.yml         # Automated GitHub Actions CI/CD pipeline
+├── vercel.json                  # Vercel SPA deployment configuration
+├── netlify.toml                 # Netlify SPA deployment configuration
+├── public/
+│   └── _redirects              # Netlify SPA routing fallback
 ├── package.json                 # Dependencies & test scripts
 ├── tsconfig.json                # TypeScript configuration
-└── vite.config.ts               # Vite & Tailwind CSS v4 setup
+└── vite.config.ts               # Vite & Tailwind CSS setup
 ```
 
 ---
@@ -141,6 +160,8 @@ npm run test:devnet
 ============================================================
 🧪 RUNNING CIPHERTRIAL COMPACT CONTRACT TEST SUITE
 📡 TARGET NETWORKS: Midnight Preprod Network & Midnight Preview Network
+🔗 PREPROD RPC: wss://rpc.preprod.midnight.network
+🔗 PREVIEW RPC: wss://rpc.preview.midnight.network
 ============================================================
 
 1️⃣ Testing Sponsor Authorization Registry (Circuit 0)
@@ -205,6 +226,7 @@ CipherTrial is fully configured for zero-configuration, continuous deployment on
 | :--- | :---: | :--- |
 | **Working MVP on Preprod** | ✅ PASSED | Multi-network preprod/preview configuration and RPC integrations |
 | **Verifiable Preprod Address** | ✅ PASSED | `0x7a3f891b2c4e5d6f7a8b9c0d1e2f3a4b5c6d7e8f` |
+| **Stitch UI Integration** | ✅ PASSED | Full Zero-Trust design system and trial matcher modules integrated |
 | **Documentation (README + Setup)** | ✅ PASSED | System architecture diagram, quickstart, testing guide, and ZK specs |
 | **CI/CD Pipeline** | ✅ PASSED | GitHub Actions `.github/workflows/ci.yml` running tests & builds |
 | **CI Badge Linked in README** | ✅ PASSED | Passing CI badge displayed at top of README |
@@ -215,4 +237,3 @@ CipherTrial is fully configured for zero-configuration, continuous deployment on
 
 ## 📄 License
 This project is licensed under the [MIT License](LICENSE).
-
