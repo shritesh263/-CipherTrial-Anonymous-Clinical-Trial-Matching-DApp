@@ -176,6 +176,29 @@ npm run build
 
 ---
 
+## 🌐 Cloud Deployment Guide (Vercel & Netlify Ready)
+
+CipherTrial is fully configured for zero-configuration, continuous deployment on **Vercel** and **Netlify**.
+
+### 1. Deploying on Vercel
+- **Automatic Deployment**: Import the GitHub repository into your Vercel Dashboard. Vercel automatically detects `vercel.json`, sets the framework to Vite, and builds to `dist`.
+- **CLI Deployment**:
+  ```bash
+  npm run deploy:vercel
+  ```
+
+### 2. Deploying on Netlify
+- **Automatic Deployment**: Import the repository into Netlify. Netlify reads `netlify.toml` and `public/_redirects` for Single Page App SPA routing.
+- **Build Settings**:
+  - **Build Command**: `npm run build`
+  - **Publish Directory**: `dist`
+- **CLI Deployment**:
+  ```bash
+  npm run deploy:netlify
+  ```
+
+---
+
 ## ✅ Submission Checklist
 
 | Requirement | Status | Details |
@@ -185,9 +208,11 @@ npm run build
 | **Documentation (README + Setup)** | ✅ PASSED | System architecture diagram, quickstart, testing guide, and ZK specs |
 | **CI/CD Pipeline** | ✅ PASSED | GitHub Actions `.github/workflows/ci.yml` running tests & builds |
 | **CI Badge Linked in README** | ✅ PASSED | Passing CI badge displayed at top of README |
+| **Vercel & Netlify Ready** | ✅ PASSED | Native `vercel.json` and `netlify.toml` deployment configurations |
 | **Minimum 15 Meaningful Commits** | ✅ PASSED | Clean atomic Git commit history |
 
 ---
 
 ## 📄 License
 This project is licensed under the [MIT License](LICENSE).
+

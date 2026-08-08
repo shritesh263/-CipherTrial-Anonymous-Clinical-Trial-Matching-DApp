@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:devnet": "node --experimental-strip-types scripts/test-devnet.ts",
-    "deploy:preview": "node --experimental-strip-types scripts/deploy-preview.ts"
+    "deploy:preview": "node --experimental-strip-types scripts/deploy-preview.ts",
+    "deploy:vercel": "vercel --prod",
+    "deploy:netlify": "netlify deploy --prod"
   },
   "dependencies": {
     "clsx": "^2.1.1",
