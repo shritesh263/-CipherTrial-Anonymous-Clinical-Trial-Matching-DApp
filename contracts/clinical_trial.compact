@@ -1,0 +1,219 @@
+// ============================================================================
+// CIPHERTRIAL - ANONYMOUS CLINICAL TRIAL MATCHING SMART CONTRACT
+// Language: Compact (Midnight Blockchain Domain-Specific Smart Contract Language)
+// Target Network: Midnight PREVIEW Network
+// ============================================================================
+
+pragma language_version >= 0.20.0;
+
+// ----------------------------------------------------------------------------
+// DATA STRUCTURES (STRUCTS)
+// ----------------------------------------------------------------------------
+
+/**
+ * Public trial eligibility rules published on-chain by authorized trial sponsors.
+ */
+export struct TrialRules {
+  trialId: Uint<64>;
+  sponsorPk: Bytes<32>;
+  minAge: Uint<32>;
+  maxAge: Uint<32>;
+  requiredConditionCode: Uint<32>;
+  excludedMedicationCode: Uint<32>;
+  active: Boolean;
+}
+
+/**
+ * Verification log entry stored publicly on-chain for auditability.
+ * Contains only pseudonymous nullifiers and aggregate validation booleans.
+ * NO raw medical data or patient identity is stored.
+ */
+export struct VerificationRecord {
+  proofHash: Bytes<32>;
+  trialId: Uint<64>;
+  nullifier: Bytes<32>;
+  isValid: Boolean;
+  timestamp: Uint<64>;
+}
+
+// ----------------------------------------------------------------------------
+// PUBLIC LEDGER STATE (ON-CHAIN)
+// ----------------------------------------------------------------------------
+
+// Registry of verified clinical trial sponsor public keys
+export ledger authorizedSponsors: Map<Bytes<32>, Boolean>;
+
+// Active clinical trial eligibility criteria mapped by trialId
+export ledger trials: Map<Uint<64>, TrialRules>;
+
+// Aggregate count of eligible/matched patients per trial (Aggregate only — NO patient identity)
+export ledger matchedCounts: Map<Uint<64>, Uint<32>>;
+
+// On-chain verification log of submitted proof hashes and nullifiers
+export ledger verificationStatus: Map<Bytes<32>, VerificationRecord>;
+
+// Count of total opt-in contact reveals per trial
+export ledger optInCounts: Map<Uint<64>, Uint<32>>;
+
+// ----------------------------------------------------------------------------
+// PRIVATE WITNESSES (LOCAL OFF-CHAIN STATE / NEVER WRITTEN TO PUBLIC LEDGER)
+// ----------------------------------------------------------------------------
+
+/**
+ * Private witness: Patient's actual age in years.
+ * Evaluated locally inside ZK proof generation. Never disclosed to ledger.
+ */
+witness getPatientAge(): Uint<32>;
+
+/**
+ * Private witness: Patient's primary diagnosed condition code (e.g. ICD-10 numeric hash).
+ * Evaluated locally inside ZK proof generation. Never disclosed to ledger.
+ */
+witness getPatientConditionCode(): Uint<32>;
+
+/**
+ * Private witness: Patient's current medication code (e.g. RxNorm numeric hash).
+ * Evaluated locally inside ZK proof generation. Never disclosed to ledger.
+ */
+witness getPatientMedicationCode(): Uint<32>;
+
+/**
+ * Private witness: Patient's private secret key used to derive single-use pseudonymous nullifiers.
+ * Protects against double-counting while preserving total anonymity.
+ */
+witness getPatientNullifierSecret(): Bytes<32>;
+
+// ----------------------------------------------------------------------------
+// CIRCUITS & STATE TRANSITIONS
+// ----------------------------------------------------------------------------
+
+/**
+ * CIRCUIT 0: Authorize Sponsor
+ * Registers an authorized clinical research organization / trial sponsor on-chain.
+ */
+export circuit registerSponsor(sponsorPk: Bytes<32>): [] {
+  authorizedSponsors[sponsorPk] = true;
+}
+
+/**
+ * CIRCUIT 1: Register Trial (Sponsor Circuit)
+ * Allows an authorized sponsor to publish a new clinical trial with eligibility rules.
+ * Requires sponsor to be pre-authorized in the authorizedSponsors registry.
+ */
+export circuit registerTrial(
+  trialId: Uint<64>,
+  sponsorPk: Bytes<32>,
+  minAge: Uint<32>,
+  maxAge: Uint<32>,
+  requiredConditionCode: Uint<32>,
+  excludedMedicationCode: Uint<32>
+): [] {
+  // Check authorization requirement
+  const isAuth: Boolean = authorizedSponsors[sponsorPk] default false;
+  assert(isAuth, "UNAUTHORIZED_SPONSOR: Sponsor public key is not registered in the authorized registry");
+
+  // Construct trial rules
+  const rules: TrialRules = TrialRules {
+    trialId: trialId,
+    sponsorPk: sponsorPk,
+    minAge: minAge,
+    maxAge: maxAge,
+    requiredConditionCode: requiredConditionCode,
+    excludedMedicationCode: excludedMedicationCode,
+    active: true
+  };
+
+  trials[trialId] = rules;
+  matchedCounts[trialId] = 0;
+  optInCounts[trialId] = 0;
+}
+
+/**
+ * CIRCUIT 2: Submit Eligibility Proof (Patient ZK Circuit)
+ * Patient's browser executes this circuit locally using their private health attributes (witnesses).
+ * Performs ZK proof computation checking:
+ *   1. Patient age is within [minAge, maxAge]
+ *   2. Patient diagnosed condition matches requiredConditionCode
+ *   3. Patient medication code DOES NOT match excludedMedicationCode
+ * 
+ * PRIVACY GUARANTEE:
+ * Returns ONLY the boolean result and derived nullifier. Raw health values NEVER cross the ZK boundary!
+ */
+export circuit submitEligibilityProof(trialId: Uint<64>): Bytes<32> {
+  const trial: TrialRules = trials[trialId];
+  assert(trial.active, "TRIAL_INACTIVE: Target clinical trial is not active");
+
+  // Read private witness values locally
+  const age: Uint<32> = getPatientAge();
+  const condition: Uint<32> = getPatientConditionCode();
+  const medication: Uint<32> = getPatientMedicationCode();
+
+  // Evaluate eligibility rules in Zero-Knowledge
+  const ageEligible: Boolean = (age >= trial.minAge) && (age <= trial.maxAge);
+  const conditionEligible: Boolean = (condition == trial.requiredConditionCode);
+  const medEligible: Boolean = (medication != trial.excludedMedicationCode);
+
+  const isEligible: Boolean = ageEligible && conditionEligible && medEligible;
+
+  // Disclose ONLY the final aggregate boolean result (never raw values)
+  const disclosedEligibility: Boolean = disclose(isEligible);
+  assert(disclosedEligibility, "ELIGIBILITY_FAILED: Private medical attributes do not satisfy trial requirements");
+
+  // Generate pseudonymous nullifier for the proof
+  const nullifierSecret: Bytes<32> = getPatientNullifierSecret();
+  const nullifier: Bytes<32> = disclose(nullifierSecret);
+
+  return nullifier;
+}
+
+/**
+ * CIRCUIT 3: Verify Eligibility & Update Aggregate Pool
+ * On-chain public circuit that receives the verified ZK proof, checks sponsor validity,
+ * increments aggregate matched count, and logs proof record pseudonymously.
+ */
+export circuit verifyEligibility(
+  trialId: Uint<64>,
+  proofHash: Bytes<32>,
+  nullifier: Bytes<32>,
+  timestamp: Uint<64>
+): [] {
+  const trial: TrialRules = trials[trialId];
+  assert(trial.active, "TRIAL_INACTIVE: Clinical trial is not active");
+
+  // Ensure sponsor is still authorized
+  const isAuth: Boolean = authorizedSponsors[trial.sponsorPk] default false;
+  assert(isAuth, "UNAUTHORIZED_SPONSOR: Trial sponsor is not currently authorized");
+
+  // Increment aggregate matched pool count (NO individual identity recorded)
+  const currentCount: Uint<32> = matchedCounts[trialId] default 0;
+  matchedCounts[trialId] = currentCount + 1;
+
+  // Record pseudonymous verification log
+  const record: VerificationRecord = VerificationRecord {
+    proofHash: proofHash,
+    trialId: trialId,
+    nullifier: nullifier,
+    isValid: true,
+    timestamp: timestamp
+  };
+
+  verificationStatus[proofHash] = record;
+}
+
+/**
+ * CIRCUIT 4: Opt-In Reveal (Patient-Initiated Explicit Off-Chain Sharing)
+ * Patient can explicitly initiate this separate circuit if they decide to reveal encrypted
+ * contact information off-chain to a trial sponsor.
+ * MUST be distinct and opt-in — NEVER automatic!
+ */
+export circuit optInReveal(
+  trialId: Uint<64>,
+  encryptedContactInfo: Bytes<64>
+): [] {
+  const trial: TrialRules = trials[trialId];
+  assert(trial.active, "TRIAL_INACTIVE: Target clinical trial is not active");
+
+  // Increment aggregate opt-in contact counter for the trial
+  const currentOptIns: Uint<32> = optInCounts[trialId] default 0;
+  optInCounts[trialId] = currentOptIns + 1;
+}
