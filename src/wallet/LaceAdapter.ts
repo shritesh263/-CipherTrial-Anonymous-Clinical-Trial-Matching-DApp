@@ -1,7 +1,7 @@
 // ============================================================================
-// LACE WALLET ADAPTER
+// LACE WALLET ADAPTER (REAL POPUP INTEGRATION)
 // Midnight Blockchain - Preprod & Preview Support
-// Connects to live Lace / Midnight Wallet extension or custom original address
+// Triggers native browser extension popup permission window on connect.
 // ============================================================================
 
 import { WalletAdapter, WalletAccount, MidnightTransaction, ProvingProvider, WalletType } from './types';
@@ -9,9 +9,9 @@ import { MIDNIGHT_PREPROD_CONFIG } from '../config/network';
 
 export class LaceWalletAdapter implements WalletAdapter {
   public readonly id: WalletType = 'lace';
-  public readonly name = 'Lace Wallet (Midnight)';
+  public readonly name = 'Lace Wallet';
   public readonly icon = '🛡️';
-  public readonly description = 'Official Midnight & Cardano lightweight web wallet by IOHK with delegated ZK proving support.';
+  public readonly description = 'Official Midnight & Cardano lightweight web wallet by IOHK. Triggers native browser popup for permissions.';
   public readonly websiteUrl = 'https://www.lace.io';
 
   private connectedAccount: WalletAccount | null = null;
@@ -28,7 +28,7 @@ export class LaceWalletAdapter implements WalletAdapter {
   }
 
   public async connect(customAddress?: string, customPublicKey?: string): Promise<WalletAccount> {
-    // If custom address is provided, use user's original wallet address
+    // 1. If user provided a custom address input, connect directly with that address
     if (customAddress && customAddress.trim().length > 0) {
       const account: WalletAccount = {
         address: customAddress.trim(),
@@ -43,46 +43,58 @@ export class LaceWalletAdapter implements WalletAdapter {
       return account;
     }
 
-    // Try detecting live injected provider extensions
+    // 2. Trigger native extension popup permission request via enable()
     const provider = typeof window !== 'undefined'
-      ? (window.midnight?.lace || window.midnight?.mnLace || window.cardano?.lace || window.cardano?.midnight)
+      ? (window.midnight?.lace || window.midnight?.mnLace || window.cardano?.lace || window.cardano?.midnight || window.ethereum)
       : null;
 
-    if (provider && typeof provider.enable === 'function') {
+    if (provider) {
       try {
-        const api = await provider.enable();
-        const unused = await api.getUnusedAddresses?.();
-        const used = await api.getUsedAddresses?.();
-        const address = unused?.[0] || used?.[0] || "0x7a3f891b2c4e5d6f7a8b9c0d1e2f3a4b5c6d7e8f";
-        
-        const account: WalletAccount = {
-          address,
-          coinPublicKey: "0xlace_pubkey_0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-          networkId: MIDNIGHT_PREPROD_CONFIG.networkId,
-          balance: {
-            night: 3500000000n,
-            dust: 750000000n,
-          },
-        };
-        this.connectedAccount = account;
-        return account;
-      } catch (err) {
-        console.warn("Lace enable failed or user rejected, falling back to original wallet connection prompt:", err);
+        // Triggers extension's native permission popup window!
+        let api: any = null;
+        if (typeof provider.enable === 'function') {
+          api = await provider.enable();
+        } else if (typeof provider.request === 'function') {
+          const accounts = await provider.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            const account: WalletAccount = {
+              address: accounts[0],
+              coinPublicKey: "0xlace_pubkey_" + accounts[0].slice(-10),
+              networkId: MIDNIGHT_PREPROD_CONFIG.networkId,
+              balance: { night: 5000000000n, dust: 1000000000n },
+            };
+            this.connectedAccount = account;
+            return account;
+          }
+        }
+
+        if (api) {
+          const unused = await api.getUnusedAddresses?.();
+          const used = await api.getUsedAddresses?.();
+          const change = await api.getChangeAddress?.();
+          const realAddress = unused?.[0] || used?.[0] || (typeof change === 'string' ? change : null);
+
+          if (realAddress) {
+            const account: WalletAccount = {
+              address: realAddress,
+              coinPublicKey: "0xlace_pubkey_" + realAddress.slice(-10),
+              networkId: MIDNIGHT_PREPROD_CONFIG.networkId,
+              balance: { night: 5000000000n, dust: 1000000000n },
+            };
+            this.connectedAccount = account;
+            return account;
+          }
+        }
+      } catch (err: any) {
+        console.error("Lace extension permission popup error:", err);
+        throw new Error(err?.message || "Lace Wallet connection was rejected or failed.");
       }
     }
 
-    // Default connection account for Lace
-    const account: WalletAccount = {
-      address: "0x7a3f891b2c4e5d6f7a8b9c0d1e2f3a4b5c6d7e8f",
-      coinPublicKey: "0x89a1c2d3e4f567890123456789abcdef0123456789abcdef0123456789abcdef",
-      networkId: MIDNIGHT_PREPROD_CONFIG.networkId,
-      balance: {
-        night: 2450000000n,
-        dust: 500000000n,
-      },
-    };
-    this.connectedAccount = account;
-    return account;
+    // If extension is not installed, prompt user to install extension or input address
+    throw new Error(
+      "Lace Wallet extension is not installed in your browser. Please install Lace Wallet from https://www.lace.io or enter your wallet address directly."
+    );
   }
 
   public async disconnect(): Promise<void> {

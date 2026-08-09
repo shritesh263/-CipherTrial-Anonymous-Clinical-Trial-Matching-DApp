@@ -1,7 +1,7 @@
 // ============================================================================
-// 1AM WALLET ADAPTER
+// 1AM WALLET ADAPTER (REAL POPUP INTEGRATION)
 // Midnight Blockchain - Preprod & Preview Support
-// Connects to live 1AM extension or user's original wallet address
+// Triggers native 1AM extension popup permission window on connect.
 // ============================================================================
 
 import { WalletAdapter, WalletAccount, MidnightTransaction, ProvingProvider, WalletType } from './types';
@@ -11,7 +11,7 @@ export class OneAmWalletAdapter implements WalletAdapter {
   public readonly id: WalletType = '1am';
   public readonly name = '1AM Wallet';
   public readonly icon = '⚡';
-  public readonly description = 'High-performance Midnight wallet with built-in internal proof server, auto-balancing, and 1-click ZK signing.';
+  public readonly description = 'High-performance Midnight wallet with native ZK proof server. Triggers extension popup permissions.';
   public readonly websiteUrl = 'https://1am.midnight.network';
 
   private connectedAccount: WalletAccount | null = null;
@@ -22,11 +22,11 @@ export class OneAmWalletAdapter implements WalletAdapter {
   }
 
   public async connect(customAddress?: string, customPublicKey?: string): Promise<WalletAccount> {
-    // If user provided their original wallet address, use it directly
+    // 1. If user provided a custom address input, connect directly with that address
     if (customAddress && customAddress.trim().length > 0) {
       const account: WalletAccount = {
         address: customAddress.trim(),
-        coinPublicKey: customPublicKey?.trim() || "0x1am_user_pubkey_abcdef9876543210abcdef9876543210",
+        coinPublicKey: customPublicKey?.trim() || "0x1am_pubkey_abcdef9876543210abcdef9876543210",
         networkId: MIDNIGHT_PREPROD_CONFIG.networkId,
         balance: {
           night: 3200000000n,
@@ -37,17 +37,17 @@ export class OneAmWalletAdapter implements WalletAdapter {
       return account;
     }
 
-    // Attempt connecting to live 1AM extension if installed
+    // 2. Trigger native extension popup permission request via enable()
     const provider = typeof window !== 'undefined' ? (window.midnight?.['1am'] || window.midnight?.oneAm) : null;
 
     if (provider && typeof provider.enable === 'function') {
       try {
-        const api = await provider.enable();
-        const address = await api.getAddress?.();
+        const api = await provider.enable(); // Pops up native extension approval window!
+        const address = await api.getAddress?.() || await api.getUnusedAddresses?.()?.[0];
         if (address) {
           const account: WalletAccount = {
             address,
-            coinPublicKey: "0x1am_pubkey_abcdef9876543210abcdef9876543210",
+            coinPublicKey: "0x1am_pubkey_" + address.slice(-10),
             networkId: MIDNIGHT_PREPROD_CONFIG.networkId,
             balance: {
               night: 3200000000n,
@@ -57,24 +57,16 @@ export class OneAmWalletAdapter implements WalletAdapter {
           this.connectedAccount = account;
           return account;
         }
-      } catch (err) {
-        console.warn("1AM extension connect error:", err);
+      } catch (err: any) {
+        console.error("1AM extension permission popup error:", err);
+        throw new Error(err?.message || "1AM Wallet connection request was rejected or failed.");
       }
     }
 
-    // Default connection using Midnight Preprod Verifiable Address
-    const defaultAddress = "0x7a3f891b2c4e5d6f7a8b9c0d1e2f3a4b5c6d7e8f";
-    const account: WalletAccount = {
-      address: defaultAddress,
-      coinPublicKey: "0x1am_internal_proof_pubkey_77778888999900001111222233334444",
-      networkId: MIDNIGHT_PREPROD_CONFIG.networkId,
-      balance: {
-        night: 3200000000n,
-        dust: 800000000n,
-      },
-    };
-    this.connectedAccount = account;
-    return account;
+    // If extension is not installed, prompt user to install extension or input address
+    throw new Error(
+      "1AM Wallet extension is not installed in your browser. Please install 1AM Wallet or enter your wallet address directly."
+    );
   }
 
   public async disconnect(): Promise<void> {
