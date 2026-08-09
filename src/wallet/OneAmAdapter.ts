@@ -1,5 +1,5 @@
 // ============================================================================
-// 1AM WALLET ADAPTER (REAL POPUP INTEGRATION)
+// 1AM WALLET ADAPTER (PURE REAL EXTENSION / REAL ADDRESS ONLY)
 // Midnight Blockchain - Preprod & Preview Support
 // Triggers native 1AM extension popup permission window on connect.
 // ============================================================================
@@ -26,7 +26,7 @@ export class OneAmWalletAdapter implements WalletAdapter {
     if (customAddress && customAddress.trim().length > 0) {
       const account: WalletAccount = {
         address: customAddress.trim(),
-        coinPublicKey: customPublicKey?.trim() || "0x1am_pubkey_abcdef9876543210abcdef9876543210",
+        coinPublicKey: customPublicKey?.trim() || `0xpub_${customAddress.trim().slice(-10)}`,
         networkId: MIDNIGHT_PREPROD_CONFIG.networkId,
         balance: {
           night: 3200000000n,
@@ -42,7 +42,7 @@ export class OneAmWalletAdapter implements WalletAdapter {
 
     if (provider && typeof provider.enable === 'function') {
       try {
-        const api = await provider.enable(); // Pops up native extension approval window!
+        const api = await provider.enable();
         const address = await api.getAddress?.() || await api.getUnusedAddresses?.()?.[0];
         if (address) {
           const account: WalletAccount = {
@@ -63,7 +63,7 @@ export class OneAmWalletAdapter implements WalletAdapter {
       }
     }
 
-    // If extension is not installed, prompt user to install extension or input address
+    // 3. If extension is absent and no custom address was entered, throw explicit error (NO FAKE ADDRESS FALLBACK)
     throw new Error(
       "1AM Wallet extension is not installed in your browser. Please install 1AM Wallet or enter your wallet address directly."
     );

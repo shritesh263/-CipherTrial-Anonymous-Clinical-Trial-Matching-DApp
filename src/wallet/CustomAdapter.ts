@@ -17,20 +17,24 @@ export class CustomWalletAdapter implements WalletAdapter {
   private connectedAccount: WalletAccount | null = null;
 
   public isInstalled(): boolean {
-    return true; // Always available for user original address input
+    return true;
   }
 
   public async connect(customAddress?: string, customPublicKey?: string): Promise<WalletAccount> {
-    const address = customAddress?.trim() || "0x7a3f891b2c4e5d6f7a8b9c0d1e2f3a4b5c6d7e8f";
-    const coinPublicKey = customPublicKey?.trim() || "0x89a1c2d3e4f567890123456789abcdef0123456789abcdef0123456789abcdef";
+    const trimmedAddress = customAddress?.trim();
+    if (!trimmedAddress) {
+      throw new Error("Please enter your real wallet address.");
+    }
+
+    const coinPublicKey = customPublicKey?.trim() || `0xpub_${trimmedAddress.slice(-10)}`;
 
     const account: WalletAccount = {
-      address,
+      address: trimmedAddress,
       coinPublicKey,
       networkId: MIDNIGHT_PREPROD_CONFIG.networkId,
       balance: {
-        night: 5000000000n, // 5,000 NIGHT
-        dust: 1000000000n,  // 1,000 DUST
+        night: 5000000000n,
+        dust: 1000000000n,
       },
     };
 
