@@ -8,6 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:devnet": "tsx scripts/test-devnet.ts",
+    "test:js": "node scripts/verify-zk-proof.js",
+    "benchmark:js": "node scripts/benchmark-prover.js",
+    "build:rust": "cd rust_zk_prover && cargo build --release",
+    "test:rust": "cd rust_zk_prover && cargo test",
     "deploy:preview": "node --experimental-strip-types scripts/deploy-preview.ts",
     "deploy:vercel": "vercel --prod",
     "deploy:netlify": "netlify deploy --prod"

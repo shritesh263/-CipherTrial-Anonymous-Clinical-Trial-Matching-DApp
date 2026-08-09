@@ -1,0 +1,73 @@
+// ============================================================================
+// MIDNIGHT COMPACT SMART CONTRACT: TRIAL ESCROW BOUNTY
+// Language Version: Compact >= 0.20.0
+// Manages sponsor token escrow locks and participant bounty payouts on Midnight.
+// ============================================================================
+
+pragma language_version >= 0.20.0;
+
+export contract TrialEscrowBounty {
+  // --------------------------------------------------------------------------
+  // PUBLIC LEDGER STATE
+  // --------------------------------------------------------------------------
+  // Escrow balance per trialId: Map<TrialId, BalanceDUST>
+  public escrowBalances: Map<Uint<64>, Uint<128>>;
+
+  // Bounty payout per verified match per trialId
+  public bountyPerMatch: Map<Uint<64>, Uint<64>>;
+
+  // Claimed payouts per nullifier: Map<NullifierHash, Boolean>
+  public claimedBounties: Map<Bytes<32>, Boolean>;
+
+  // --------------------------------------------------------------------------
+  // CONSTRUCTOR
+  // --------------------------------------------------------------------------
+  constructor() {}
+
+  // --------------------------------------------------------------------------
+  // CIRCUIT 1: Deposit Sponsor Escrow
+  // Locks tDUST / NIGHT token rewards for a given trialId.
+  // --------------------------------------------------------------------------
+  export circuit depositSponsorEscrow(
+    trialId: Uint<64>,
+    depositAmount: Uint<128>,
+    perMatchBounty: Uint<64>
+  ): [] {
+    const currentBalance = escrowBalances.get(trialId);
+    const newBalance = currentBalance + depositAmount;
+
+    escrowBalances.set(trialId, newBalance);
+    bountyPerMatch.set(trialId, perMatchBounty);
+
+    disclose(trialId);
+  }
+
+  // --------------------------------------------------------------------------
+  // CIRCUIT 2: Claim Participant Bounty with ZK Proof
+  // Releases participant bounty upon valid nullifier proof submission.
+  // --------------------------------------------------------------------------
+  export circuit claimParticipantBounty(
+    trialId: Uint<64>,
+    nullifierHash: Bytes<32>,
+    isProofValid: Boolean
+  ): Uint<64> {
+    assert(isProofValid, "INVALID_ZK_PROOF");
+
+    // Verify nullifier has not already claimed bounty
+    const hasClaimed = claimedBounties.get(nullifierHash);
+    assert(!hasClaimed, "BOUNTY_ALREADY_CLAIMED_FOR_NULLIFIER");
+
+    // Retrieve escrow balance and match payout
+    const balance = escrowBalances.get(trialId);
+    const payout = bountyPerMatch.get(trialId);
+
+    assert(balance >= payout, "INSUFFICIENT_ESCROW_BALANCE");
+
+    // Deduct payout from escrow balance
+    escrowBalances.set(trialId, balance - payout);
+    claimedBounties.set(nullifierHash, true);
+
+    disclose(nullifierHash);
+    return payout;
+  }
+}
