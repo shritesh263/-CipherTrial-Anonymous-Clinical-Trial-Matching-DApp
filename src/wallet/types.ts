@@ -1,18 +1,18 @@
 // ============================================================================
 // WALLET ABSTRACTION LAYER TYPES
-// Standardized Provider Registry & Adapter Pattern for Lace, 1AM, and Original Wallets
+// Standardized Provider Registry & Adapter Pattern for Injected Lace & 1AM Wallets
 // Midnight Blockchain - Preprod & Preview Network Support
 // ============================================================================
 
 import { NetworkId } from '../config/network';
 
-export type WalletType = 'lace' | '1am' | 'custom';
+export type WalletType = 'lace' | '1am';
 
 export interface WalletAccount {
   address: string;
-  coinPublicKey: string;
+  coinPublicKey?: string;
   networkId: NetworkId;
-  balance: {
+  balance?: {
     night: bigint;
     dust: bigint;
   };
@@ -36,9 +36,10 @@ export interface WalletAdapter {
   description: string;
   websiteUrl: string;
   isInstalled(): boolean;
-  connect(customAddress?: string, customPublicKey?: string): Promise<WalletAccount>;
+  connect(): Promise<{ account: WalletAccount; api: any }>;
   disconnect(): Promise<void>;
   getAccount(): Promise<WalletAccount | null>;
+  getApi(): any;
   signAndBalanceTransaction(txData: any): Promise<MidnightTransaction>;
   getProvingProvider(): Promise<ProvingProvider | null>;
 }
@@ -46,17 +47,33 @@ export interface WalletAdapter {
 declare global {
   interface Window {
     midnight?: {
-      lace?: any;
-      mnLace?: any;
-      '1am'?: any;
-      oneAm?: any;
+      lace?: {
+        enable: () => Promise<any>;
+        name?: string;
+        apiVersion?: string;
+        icon?: string;
+      };
+      mnLace?: {
+        enable: () => Promise<any>;
+      };
+      '1am'?: {
+        enable: () => Promise<any>;
+        name?: string;
+        apiVersion?: string;
+      };
+      oneAm?: {
+        enable: () => Promise<any>;
+      };
       [key: string]: any;
     };
     cardano?: {
-      lace?: any;
-      midnight?: any;
+      lace?: {
+        enable: () => Promise<any>;
+      };
+      midnight?: {
+        enable: () => Promise<any>;
+      };
       [key: string]: any;
     };
-    ethereum?: any;
   }
 }

@@ -1,7 +1,7 @@
 // ============================================================================
 // WALLET PROVIDER CONTEXT
-// Handles wallet connection, active wallet selection (Lace, 1AM, Custom Original Wallet),
-// account details, transaction balancing & signing.
+// Manages real injected Midnight wallet connections (Lace & 1AM),
+// authorization popups, connected account state, and transaction signing.
 // ============================================================================
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
@@ -11,15 +11,18 @@ import { walletRegistry } from '../wallet/registry';
 interface WalletContextType {
   activeAdapter: WalletAdapter | null;
   account: WalletAccount | null;
+  walletApi: any | null;
   isConnected: boolean;
   isConnecting: boolean;
   availableWallets: WalletAdapter[];
   installedWallets: WalletAdapter[];
-  connectWallet: (type: WalletType, customAddress?: string, customPublicKey?: string) => Promise<void>;
+  connectWallet: (type: WalletType) => Promise<void>;
   disconnectWallet: () => Promise<void>;
   signAndBalance: (txData: any) => Promise<MidnightTransaction>;
   showWalletModal: boolean;
   setShowWalletModal: (show: boolean) => void;
+  connectionError: string | null;
+  clearConnectionError: () => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -27,24 +30,35 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [activeAdapter, setActiveAdapter] = useState<WalletAdapter | null>(null);
   const [account, setAccount] = useState<WalletAccount | null>(null);
+  const [walletApi, setWalletApi] = useState<any | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const availableWallets = walletRegistry.getAllAdapters();
   const installedWallets = walletRegistry.getInstalledAdapters();
 
-  const connectWallet = async (type: WalletType, customAddress?: string, customPublicKey?: string) => {
+  const connectWallet = async (type: WalletType) => {
     setIsConnecting(true);
+    setConnectionError(null);
     try {
       const adapter = walletRegistry.getAdapter(type);
-      if (!adapter) throw new Error(`Wallet adapter ${type} not found.`);
+      if (!adapter) throw new Error(`Wallet adapter for ${type} not found.`);
 
-      const acc = await adapter.connect(customAddress, customPublicKey);
+      // Trigger the real browser extension popup permission window
+      const { account: acc, api } = await adapter.connect();
+
       setActiveAdapter(adapter);
       setAccount(acc);
+      setWalletApi(api);
       setShowWalletModal(false);
-    } catch (error) {
+      setConnectionError(null);
+    } catch (error: any) {
       console.error(`Failed to connect ${type} wallet:`, error);
+      setActiveAdapter(null);
+      setAccount(null);
+      setWalletApi(null);
+      setConnectionError(error?.message || "Wallet connection request was rejected or failed.");
       throw error;
     } finally {
       setIsConnecting(false);
@@ -54,14 +68,20 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const disconnectWallet = async () => {
     if (activeAdapter) {
       await activeAdapter.disconnect();
-      setActiveAdapter(null);
-      setAccount(null);
     }
+    setActiveAdapter(null);
+    setAccount(null);
+    setWalletApi(null);
+    setConnectionError(null);
+  };
+
+  const clearConnectionError = () => {
+    setConnectionError(null);
   };
 
   const signAndBalance = async (txData: any): Promise<MidnightTransaction> => {
-    if (!activeAdapter) {
-      throw new Error("No wallet connected for transaction signing.");
+    if (!activeAdapter || !account) {
+      throw new Error("No wallet connected. Please connect a real Midnight wallet extension.");
     }
     return activeAdapter.signAndBalanceTransaction(txData);
   };
@@ -71,6 +91,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       value={{
         activeAdapter,
         account,
+        walletApi,
         isConnected: !!account,
         isConnecting,
         availableWallets,
@@ -80,6 +101,8 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         signAndBalance,
         showWalletModal,
         setShowWalletModal,
+        connectionError,
+        clearConnectionError,
       }}
     >
       {children}

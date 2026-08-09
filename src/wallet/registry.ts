@@ -1,13 +1,12 @@
 // ============================================================================
 // WALLET PROVIDER REGISTRY & ADAPTER MANAGER
 // Midnight Blockchain - Preprod & Preview Target
-// Registers Lace, 1AM, and Custom Original Wallet adapters.
+// Detects real injected Midnight browser extensions (Lace Wallet & 1AM Wallet)
 // ============================================================================
 
 import { WalletAdapter, WalletType } from './types';
 import { LaceWalletAdapter } from './LaceAdapter';
 import { OneAmWalletAdapter } from './OneAmAdapter';
-import { CustomWalletAdapter } from './CustomAdapter';
 
 export class WalletRegistry {
   private adapters: Map<WalletType, WalletAdapter> = new Map();
@@ -15,7 +14,6 @@ export class WalletRegistry {
   constructor() {
     this.registerAdapter(new LaceWalletAdapter());
     this.registerAdapter(new OneAmWalletAdapter());
-    this.registerAdapter(new CustomWalletAdapter());
   }
 
   public registerAdapter(adapter: WalletAdapter): void {
