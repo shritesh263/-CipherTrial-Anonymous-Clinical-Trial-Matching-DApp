@@ -5,10 +5,11 @@ import { Building2, Plus, Users, ShieldCheck, CheckCircle2, Lock, Sparkles, Acti
 
 export const SponsorDashboard: React.FC = () => {
   const { trials, createTrial, registerSponsor, checkSponsorAuthorization, getMatchedCount, getOptInCount } = useMidnight();
-  const { account, isConnected } = useWallet();
+  const { account, isConnected, setShowWalletModal } = useWallet();
 
-  const sponsorPk = account?.coinPublicKey || "0x89a1c2d3e4f567890123456789abcdef0123456789abcdef0123456789abcdef";
-  const isAuthorized = checkSponsorAuthorization(sponsorPk);
+  // Only use the real wallet's coinPublicKey — never a hardcoded fallback
+  const sponsorPk = account?.coinPublicKey ?? null;
+  const isAuthorized = sponsorPk ? checkSponsorAuthorization(sponsorPk) : false;
 
   // Form State
   const [trialName, setTrialName] = useState('');
@@ -25,8 +26,8 @@ export const SponsorDashboard: React.FC = () => {
 
   const handleAuthorizeSponsor = async () => {
     try {
-      await registerSponsor(sponsorPk);
-      setSuccessMsg(`Sponsor PK ${sponsorPk.slice(0, 10)}... successfully registered in Authorized Sponsor Registry!`);
+      await registerSponsor(sponsorPk!);
+      setSuccessMsg(`Sponsor PK ${sponsorPk!.slice(0, 10)}... successfully registered in Authorized Sponsor Registry!`);
     } catch (err: any) {
       setErrorMsg(err.message || "Authorization failed.");
     }
@@ -43,7 +44,7 @@ export const SponsorDashboard: React.FC = () => {
       await createTrial({
         trialId,
         trialName: trialName || "Phase II Oncology Biomarker Study",
-        sponsorPk,
+        sponsorPk: sponsorPk!,
         sponsorName,
         minAge: Number(minAge),
         maxAge: Number(maxAge),
@@ -65,6 +66,29 @@ export const SponsorDashboard: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       
+      {/* WALLET CONNECTION GATE — no real wallet = no sponsor access */}
+      {(!isConnected || !account || !sponsorPk) ? (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+          <div className="p-5 bg-[#1d2022] border border-[#44e2cd]/30 rounded-3xl">
+            <Building2 className="w-12 h-12 text-[#44e2cd]" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-extrabold text-[#e0e3e5] mb-2">Sponsor Access Requires Wallet</h2>
+            <p className="text-sm text-[#a0a0ab] max-w-md">
+              Connect a real Midnight browser wallet extension (Lace or 1AM) to access sponsor features.
+              Your wallet&apos;s coin public key is used as your sponsor identity on-chain.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowWalletModal(true)}
+            className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#44e2cd] to-[#03c6b2] text-[#003731] font-mono font-bold text-sm uppercase tracking-wider shadow-lg hover:opacity-90 transition"
+          >
+            Connect Wallet to Continue
+          </button>
+        </div>
+      ) : (
+      <>
+
       {/* Header Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 border border-indigo-500/20 p-6 sm:p-8 shadow-2xl">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
@@ -303,6 +327,8 @@ export const SponsorDashboard: React.FC = () => {
 
       </div>
 
+      </>
+      )}
     </div>
   );
 };

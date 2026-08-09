@@ -134,13 +134,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
 
             {/* Wallet Button */}
             {isConnected && account ? (
-              <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-[#1d2022] border border-[#44e2cd]/40 text-[#e0e3e5]">
+              <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-[#1d2022] border border-[#44e2cd]/40 text-[#e0e3e5]" title={`Full address: ${account.address}`}>
                 <span className="text-base">{activeAdapter?.icon}</span>
                 <div className="text-left font-mono">
-                  <div className="text-[11px] font-bold text-[#44e2cd]">
+                  <div className="text-[11px] font-bold text-[#44e2cd] flex items-center gap-1">
                     {activeAdapter?.name}
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" title="Real extension connected" />
                   </div>
-                  <div className="text-[10px] text-[#c6c6cd]">
+                  <div className="text-[10px] text-[#c6c6cd]" title={account.address}>
                     {formatAddress(account.address)}
                   </div>
                 </div>

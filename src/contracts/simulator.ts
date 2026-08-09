@@ -64,15 +64,14 @@ export class CompactTrialContractSimulator {
   private optInCounts: Map<bigint, number> = new Map();
 
   constructor() {
-    // Pre-authorize default demo sponsor organization for smooth initial experience
-    const defaultSponsorPk = "0x89a1c2d3e4f567890123456789abcdef0123456789abcdef0123456789abcdef";
-    this.authorizedSponsors.set(defaultSponsorPk.toLowerCase(), true);
+    // Initialize sample seed trial (no pre-authorized sponsor — requires real wallet auth)
+    const sampleSponsorPk = "0xsample_seed_sponsor";
 
     // Initialize sample seed trial
     const sampleTrial: TrialRules = {
       trialId: 101n,
       trialName: "Phase III Asthma Biologic Efficacy Study",
-      sponsorPk: defaultSponsorPk,
+      sponsorPk: sampleSponsorPk,
       sponsorName: "Aetheria BioPharma",
       minAge: 18,
       maxAge: 65,

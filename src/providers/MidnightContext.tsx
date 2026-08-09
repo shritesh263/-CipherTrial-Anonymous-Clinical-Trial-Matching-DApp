@@ -114,7 +114,7 @@ export const MidnightProvider: React.FC<{ children: ReactNode }> = ({ children }
         activeNetworkId,
         switchNetwork,
         trials,
-        sponsorAuthorized: true,
+        sponsorAuthorized: false, // computed dynamically in SponsorDashboard from real wallet coinPublicKey
         refreshTrials,
         registerSponsor,
         checkSponsorAuthorization,
