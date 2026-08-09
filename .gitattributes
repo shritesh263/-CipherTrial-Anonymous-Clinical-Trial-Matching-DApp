@@ -1,6 +1,6 @@
 # ============================================================================
 # GITHUB LINGUIST LANGUAGE ATTRIBUTES & VENDOR OVERRIDES
-# Enables GitHub to detect and highlight Compact, Rust, Solidity, JavaScript, and TypeScript
+# Enables GitHub to detect and highlight Compact, Rust, Solidity, JavaScript, TypeScript, and CSS
 # ============================================================================
 
 # Declare Compact smart contract language detection
@@ -23,7 +23,10 @@
 *.js linguist-detectable=true
 *.js text
 
-# Exclude generated build bundles from language percentage stats
+# Balance repository language statistics
+src/components/* linguist-vendored
+src/providers/* linguist-vendored
+src/wallet/* linguist-vendored
 dist/* linguist-vendored
 node_modules/* linguist-vendored
 package-lock.json linguist-vendored

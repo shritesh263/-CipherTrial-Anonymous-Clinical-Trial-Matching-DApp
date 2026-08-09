@@ -1,10 +1,10 @@
 // ============================================================================
 // WALLET PROVIDER CONTEXT
-// Handles wallet connection, active wallet selection (Lace vs 1AM),
+// Handles wallet connection, active wallet selection (Lace, 1AM, Custom Original Wallet),
 // account details, transaction balancing & signing.
 // ============================================================================
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { WalletAccount, WalletAdapter, WalletType, MidnightTransaction } from '../wallet/types';
 import { walletRegistry } from '../wallet/registry';
 
@@ -15,7 +15,7 @@ interface WalletContextType {
   isConnecting: boolean;
   availableWallets: WalletAdapter[];
   installedWallets: WalletAdapter[];
-  connectWallet: (type: WalletType) => Promise<void>;
+  connectWallet: (type: WalletType, customAddress?: string, customPublicKey?: string) => Promise<void>;
   disconnectWallet: () => Promise<void>;
   signAndBalance: (txData: any) => Promise<MidnightTransaction>;
   showWalletModal: boolean;
@@ -33,13 +33,13 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const availableWallets = walletRegistry.getAllAdapters();
   const installedWallets = walletRegistry.getInstalledAdapters();
 
-  const connectWallet = async (type: WalletType) => {
+  const connectWallet = async (type: WalletType, customAddress?: string, customPublicKey?: string) => {
     setIsConnecting(true);
     try {
       const adapter = walletRegistry.getAdapter(type);
       if (!adapter) throw new Error(`Wallet adapter ${type} not found.`);
 
-      const acc = await adapter.connect();
+      const acc = await adapter.connect(customAddress, customPublicKey);
       setActiveAdapter(adapter);
       setAccount(acc);
       setShowWalletModal(false);

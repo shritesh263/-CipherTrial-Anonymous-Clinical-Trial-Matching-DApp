@@ -1,12 +1,12 @@
 // ============================================================================
 // WALLET ABSTRACTION LAYER TYPES
-// Standardized Provider Registry & Adapter Pattern for Lace and 1AM Wallets
+// Standardized Provider Registry & Adapter Pattern for Lace, 1AM, and Original Wallets
 // Midnight Blockchain - Preprod & Preview Network Support
 // ============================================================================
 
 import { NetworkId } from '../config/network';
 
-export type WalletType = 'lace' | '1am';
+export type WalletType = 'lace' | '1am' | 'custom';
 
 export interface WalletAccount {
   address: string;
@@ -36,7 +36,7 @@ export interface WalletAdapter {
   description: string;
   websiteUrl: string;
   isInstalled(): boolean;
-  connect(): Promise<WalletAccount>;
+  connect(customAddress?: string, customPublicKey?: string): Promise<WalletAccount>;
   disconnect(): Promise<void>;
   getAccount(): Promise<WalletAccount | null>;
   signAndBalanceTransaction(txData: any): Promise<MidnightTransaction>;
@@ -52,5 +52,11 @@ declare global {
       oneAm?: any;
       [key: string]: any;
     };
+    cardano?: {
+      lace?: any;
+      midnight?: any;
+      [key: string]: any;
+    };
+    ethereum?: any;
   }
 }
