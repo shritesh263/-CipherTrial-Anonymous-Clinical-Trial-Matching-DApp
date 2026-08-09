@@ -1,32 +1,29 @@
 # ============================================================================
-# GITHUB LINGUIST LANGUAGE ATTRIBUTES & VENDOR OVERRIDES
-# Enables GitHub to detect and highlight Compact, Rust, Solidity, JavaScript, TypeScript, and CSS
+# GITHUB LINGUIST LANGUAGE STATS OVERRIDES
+# Configures language classification for Compact, Rust, Solidity, JavaScript, and TypeScript
 # ============================================================================
 
-# Declare Compact smart contract language detection
+# Declare Compact smart contract language
 *.compact linguist-language=Compact
 *.compact linguist-detectable=true
-*.compact text
 
-# Declare Rust language detection
+# Declare Rust language
 *.rs linguist-language=Rust
 *.rs linguist-detectable=true
-*.rs text
 
-# Declare Solidity smart contract language detection
+# Declare Solidity language
 *.sol linguist-language=Solidity
 *.sol linguist-detectable=true
-*.sol text
 
-# Declare JavaScript language detection
+# Declare JavaScript language
 *.js linguist-language=JavaScript
 *.js linguist-detectable=true
-*.js text
 
-# Balance repository language statistics
-src/components/* linguist-vendored
-src/providers/* linguist-vendored
-src/wallet/* linguist-vendored
-dist/* linguist-vendored
-node_modules/* linguist-vendored
-package-lock.json linguist-vendored
+# Vendor boilerplate UI components to give equal language percentage representation to smart contracts and engines
+src/components/** linguist-vendored=true
+src/providers/** linguist-vendored=true
+src/wallet/** linguist-vendored=true
+src/config/** linguist-vendored=true
+src/contracts/** linguist-vendored=true
+dist/** linguist-vendored=true
+node_modules/** linguist-vendored=true
