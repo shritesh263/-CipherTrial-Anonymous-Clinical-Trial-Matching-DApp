@@ -17,6 +17,40 @@ CipherTrial empowers patients to anonymously prove eligibility for clinical rese
 
 ---
 
+## 📸 Screenshots
+
+> **Live UI running on Midnight Preview Network** — real wallet (1AM) connected, ZK proofs evaluated locally.
+
+### 🔍 Discover Trials — Available Clinical Trials View
+![Discover Trials — Available Clinical Trials with ZK Private Match badge](screenshot/ms3.png)
+
+---
+
+### 🔐 ZK Patient Vault — Private Witness Input Portal
+![ZK Patient Vault — Private Witness Input (Local Only) with ZK Circuit Execution Engine](screenshot/ms4.png)
+
+---
+
+### ✅ Matched Trials — ZK Eligibility Confirmed
+![Matched Trials — You Qualify! 98% ZK Match verified on Midnight Preview Network](screenshot/ms5.png)
+
+---
+
+### 🏢 Sponsor Dashboard — Unregistered State (Wallet Connected)
+![Sponsor Dashboard — Wallet connected but sponsor unregistered, showing Authorize Sponsor button](screenshot/ms2.png)
+
+---
+
+### 🏢 Sponsor Dashboard — Authorized Sponsor Registered
+![Sponsor Dashboard — Sponsor PK successfully registered in Authorized Sponsor Registry](screenshot/ms6.png)
+
+---
+
+### 🏢 Sponsor Dashboard — Verified Organization View
+![Sponsor Dashboard — Verified Organization status with Publish New Trial form](screenshot/ms1.png)
+
+---
+
 ## 🧰 Polyglot Architecture & Multi-Language Stack
 
 CipherTrial is architected across 5 specialized programming languages:
