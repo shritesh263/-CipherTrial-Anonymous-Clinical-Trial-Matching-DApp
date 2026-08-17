@@ -2,7 +2,7 @@
 
 [![Live dApp](https://img.shields.io/badge/Live%20dApp-Netlify-00C7B7?style=flat&logo=netlify)](https://superb-axolotl-638914.netlify.app/)
 [![CI/CD Pipeline](https://github.com/shritesh263/-CipherTrial-Anonymous-Clinical-Trial-Matching-DApp/actions/workflows/ci.yml/badge.svg)](https://github.com/shritesh263/-CipherTrial-Anonymous-Clinical-Trial-Matching-DApp/actions/workflows/ci.yml)
-[![Compact Language](https://img.shields.io/badge/Language-Compact%20v0.20-00F0FF?style=flat&logo=cardano)](contracts/)
+[![Compact Language](https://img.shields.io/badge/Language-Compact%20v0.23-00F0FF?style=flat&logo=cardano)](contracts/)
 [![Rust Language](https://img.shields.io/badge/Language-Rust%202021-DEA584?style=flat&logo=rust)](rust_zk_prover/)
 [![Solidity Language](https://img.shields.io/badge/Language-Solidity%200.8-363636?style=flat&logo=solidity)](contracts/solidity/)
 [![JavaScript Language](https://img.shields.io/badge/Language-JavaScript%20ESM-F7DF1E?style=flat&logo=javascript)](scripts/)
