@@ -1,93 +1,55 @@
 // ============================================================================
-// MIDNIGHT COMPACT SMART CONTRACT: PATIENT PRIVACY REGISTRY
-// Language Version: Compact >= 0.20.0
-// Manages confidential patient zkIDs, nullifier revocation, and consent scoping on Midnight.
+// PATIENT PRIVACY REGISTRY CONTRACT
+// Language: Compact (Midnight Blockchain ZK Smart Contract Language)
+// Pragma:   language_version 0.23
+// Network:  Midnight Preprod Testnet
 // ============================================================================
 
-pragma language_version >= 0.20.0;
+pragma language_version 0.23;
 
-export contract PatientPrivacyRegistry {
-  // --------------------------------------------------------------------------
-  // PUBLIC LEDGER STATE
-  // --------------------------------------------------------------------------
-  // Maps nullifier hashes to active validity boolean (true = active, false = revoked)
-  public nullifiers: Map<Bytes<32>, Boolean>;
+import CompactStandardLibrary;
 
-  // Maps anonymized patient zkID commitment hashes to registration timestamps
-  public patientCommitments: Map<Bytes<32>, Uint<64>>;
+export struct PatientCommitmentRecord {
+  commitmentHash: Bytes<32>;
+  registeredAt:   Uint<64>;
+  isActive:       Boolean;
+}
 
-  // Aggregate count of registered confidential patients
-  public totalRegisteredPatients: Uint<64>;
+// Public Ledger State
+export ledger patientCommitments: Map<Bytes<32>, PatientCommitmentRecord>;
+export ledger totalRegisteredPatients: Counter;
+export ledger revokedNullifiers: Map<Bytes<32>, Boolean>;
 
-  // --------------------------------------------------------------------------
-  // CONSTRUCTOR / INITIALIZER
-  // --------------------------------------------------------------------------
-  constructor() {
-    totalRegisteredPatients = 0;
-  }
+// Private Witnesses (local off-chain only)
+witness getPatientSecretKey(): Bytes<32>;
+witness getPatientSalt(): Bytes<32>;
 
-  // --------------------------------------------------------------------------
-  // CIRCUIT 1: Register Patient zkID Commitment
-  // Patient proves ownership of secret key off-chain and registers commitment hash.
-  // --------------------------------------------------------------------------
-  export circuit registerPatientCommitment(
-    patientSecretKey: Bytes<32>,
-    patientSalt: Bytes<32>,
-    timestamp: Uint<64>
-  ): Bytes<32> {
-    // Compute off-chain commitment hash = Hash(patientSecretKey || patientSalt)
-    const commitmentHash = hashBytes32(patientSecretKey, patientSalt);
+// Circuits
+export circuit registerPatientCommitment(timestamp: Uint<64>): Bytes<32> {
+  const secretKey: Bytes<32> = getPatientSecretKey();
+  const salt: Bytes<32> = getPatientSalt();
 
-    // Verify commitment does not already exist on-chain
-    const exists = patientCommitments.get(commitmentHash);
-    assert(!exists, "PATIENT_COMMITMENT_ALREADY_EXISTS");
+  // Compute off-chain commitment hash in ZK
+  const commitmentHash: Bytes<32> = disclose(sha256(pad(64, secretKey || salt)));
 
-    // Write commitment to public ledger state
-    patientCommitments.set(commitmentHash, timestamp);
-    totalRegisteredPatients = totalRegisteredPatients + 1;
+  const alreadyExists: Boolean = patientCommitments.lookup(commitmentHash).isActive as Boolean;
+  assert !alreadyExists "PATIENT_COMMITMENT_ALREADY_EXISTS: Commitment is already registered";
 
-    // Disclose ONLY the pseudonymous commitment hash
-    disclose(commitmentHash);
-    return commitmentHash;
-  }
+  const record: PatientCommitmentRecord = PatientCommitmentRecord {
+    commitmentHash: commitmentHash,
+    registeredAt:   timestamp,
+    isActive:       true
+  };
 
-  // --------------------------------------------------------------------------
-  // CIRCUIT 2: Nullifier Registration & Revocation
-  // Registers single-use nullifier to prevent double-matching while keeping identity private.
-  // --------------------------------------------------------------------------
-  export circuit registerNullifier(
-    nullifierHash: Bytes<32>,
-    nullifierSecret: Bytes<32>
-  ): Boolean {
-    // Verify nullifier has not been spent or revoked
-    const isSpent = nullifiers.get(nullifierHash);
-    assert(!isSpent, "NULLIFIER_ALREADY_SPENT_OR_REVOKED");
+  patientCommitments.insert(commitmentHash, record);
+  totalRegisteredPatients.increment(1);
 
-    // Mark nullifier as spent on public ledger
-    nullifiers.set(nullifierHash, true);
+  return commitmentHash;
+}
 
-    // Disclose ONLY nullifier validity
-    disclose(nullifierHash);
-    return true;
-  }
+export circuit revokePatientConsent(nullifierHash: Bytes<32>): [] {
+  const isRevoked: Boolean = revokedNullifiers.lookup(nullifierHash) as Boolean;
+  assert !isRevoked "ALREADY_REVOKED: Nullifier consent has already been revoked";
 
-  // --------------------------------------------------------------------------
-  // CIRCUIT 3: Revoke Consent / Spend Nullifier Emergency
-  // Allows patient to revoke consent by spending their single-use nullifier.
-  // --------------------------------------------------------------------------
-  export circuit revokePatientConsent(
-    nullifierHash: Bytes<32>
-  ): [] {
-    const isSpent = nullifiers.get(nullifierHash);
-    assert(isSpent, "NULLIFIER_NOT_FOUND");
-
-    // Revoke nullifier status
-    nullifiers.set(nullifierHash, false);
-    disclose(nullifierHash);
-  }
-
-  // Helper hash function for Bytes<32>
-  private circuit hashBytes32(key: Bytes<32>, salt: Bytes<32>): Bytes<32> {
-    return sha256(key, salt);
-  }
+  revokedNullifiers.insert(nullifierHash, true);
 }

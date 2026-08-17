@@ -1,50 +1,36 @@
 // ============================================================================
-// MIDNIGHT COMPACT SMART CONTRACT: HEALTH WITNESS EVALUATOR
-// Language Version: Compact >= 0.20.0
-// Multi-variable arithmetic circuits for complex ZK medical witness evaluation.
+// HEALTH WITNESS EVALUATOR CONTRACT
+// Language: Compact (Midnight Blockchain ZK Smart Contract Language)
+// Pragma:   language_version 0.23
+// Network:  Midnight Preprod Testnet
 // ============================================================================
 
-pragma language_version >= 0.20.0;
+pragma language_version 0.23;
 
-export contract HealthWitnessEvaluator {
-  constructor() {}
+import CompactStandardLibrary;
 
-  // --------------------------------------------------------------------------
-  // CIRCUIT 1: Complex Medical Witness Evaluator
-  // Computes multi-parameter clinical trial eligibility in ZK:
-  // - Age bounds [minAge <= age <= maxAge]
-  // - ICD-10 Condition Code equality
-  // - Excluded medication mismatch
-  // - Biomarker threshold check (e.g. HbA1c > minBiomarker)
-  // --------------------------------------------------------------------------
-  export circuit evaluateComplexHealthWitness(
-    patientAge: Uint<32>,
-    patientConditionCode: Uint<32>,
-    patientMedicationCode: Uint<32>,
-    patientBiomarkerValue: Uint<32>,
-    minAge: Uint<32>,
-    maxAge: Uint<32>,
-    reqConditionCode: Uint<32>,
-    exclMedicationCode: Uint<32>,
-    minBiomarkerThreshold: Uint<32>
-  ): Boolean {
-    // 1. Age Range Constraint
-    const ageValid = (patientAge >= minAge) && (patientAge <= maxAge);
+// Private Witnesses
+witness getWitnessPatientAge(): Uint<8>;
+witness getWitnessConditionCode(): Uint<16>;
+witness getWitnessExclusionCode(): Uint<16>;
 
-    // 2. Condition Code Constraint
-    const conditionValid = (patientConditionCode == reqConditionCode);
+export circuit evaluatePrivateWitness(
+  minAge:         Uint<8>,
+  maxAge:         Uint<8>,
+  targetCode:     Uint<16>,
+  excludedCode:   Uint<16>
+): Boolean {
+  const age: Uint<8> = getWitnessPatientAge();
+  const condition: Uint<16> = getWitnessConditionCode();
+  const exclusion: Uint<16> = getWitnessExclusionCode();
 
-    // 3. Excluded Medication Constraint
-    const medicationValid = (patientMedicationCode != exclMedicationCode);
+  const isAgeValid: Boolean = (age >= minAge) && (age <= maxAge);
+  const isConditionValid: Boolean = (condition == targetCode);
+  const isMedicationClean: Boolean = (exclusion != excludedCode);
 
-    // 4. Biomarker Threshold Constraint
-    const biomarkerValid = (patientBiomarkerValue >= minBiomarkerThreshold);
+  const passed: Boolean = isAgeValid && isConditionValid && isMedicationClean;
+  const result: Boolean = disclose(passed);
+  assert result "EVALUATION_FAILED: Medical witness constraints violated";
 
-    // Overall eligibility boolean
-    const isEligible = ageValid && conditionValid && medicationValid && biomarkerValid;
-
-    // Disclose ONLY the final boolean validity bit
-    disclose(isEligible);
-    return isEligible;
-  }
+  return result;
 }

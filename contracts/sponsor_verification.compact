@@ -1,88 +1,56 @@
 // ============================================================================
-// MIDNIGHT COMPACT SMART CONTRACT: SPONSOR VERIFICATION REGISTRY
-// Language Version: Compact >= 0.20.0
-// Verifies trial sponsor credentials, public key registries, and authorization tokens.
+// SPONSOR VERIFICATION REGISTRY CONTRACT
+// Language: Compact (Midnight Blockchain ZK Smart Contract Language)
+// Pragma:   language_version 0.23
+// Network:  Midnight Preprod Testnet
 // ============================================================================
 
-pragma language_version >= 0.20.0;
+pragma language_version 0.23;
 
-export contract SponsorVerificationRegistry {
-  // --------------------------------------------------------------------------
-  // PUBLIC LEDGER STATE
-  // --------------------------------------------------------------------------
-  // Admin public key authorized to onboard sponsors
-  public adminPk: Bytes<32>;
+import CompactStandardLibrary;
 
-  // Authorized Sponsor Registry: Map<SponsorPk, SponsorCredential>
-  public authorizedSponsors: Map<Bytes<32>, Boolean>;
+export struct SponsorProfile {
+  sponsorKey:     Bytes<32>;
+  metadataDigest: Bytes<32>;
+  isWhitelisted:  Boolean;
+}
 
-  // Sponsor Metadata Registry: Map<SponsorPk, SponsorInfoHash>
-  public sponsorMetadataHashes: Map<Bytes<32>, Bytes<32>>;
+// Public Ledger State
+export ledger adminKey: Bytes<32>;
+export ledger verifiedSponsors: Map<Bytes<32>, SponsorProfile>;
+export ledger activeSponsorCounter: Counter;
 
-  // Active Sponsor Count
-  public activeSponsorCount: Uint<64>;
+// Private Witnesses
+witness getAdminSecretKey(): Bytes<32>;
 
-  // --------------------------------------------------------------------------
-  // CONSTRUCTOR
-  // --------------------------------------------------------------------------
-  constructor(initialAdminPk: Bytes<32>) {
-    adminPk = initialAdminPk;
-    activeSponsorCount = 0;
-  }
+// Circuits
+export circuit initializeAdmin(initialAdminKey: Bytes<32>): [] {
+  adminKey = initialAdminKey;
+}
 
-  // --------------------------------------------------------------------------
-  // CIRCUIT 1: Authorize Sponsor
-  // Admin circuit to authorize a new clinical trial sponsor organization.
-  // --------------------------------------------------------------------------
-  export circuit authorizeSponsor(
-    callerAdminPk: Bytes<32>,
-    sponsorPk: Bytes<32>,
-    metadataHash: Bytes<32>
-  ): [] {
-    // Assert caller is the authorized contract admin
-    assert(callerAdminPk == adminPk, "UNAUTHORIZED_ADMIN_CALLER");
+export circuit whitelistSponsor(
+  sponsorKey:     Bytes<32>,
+  metadataDigest: Bytes<32>
+): [] {
+  const profile: SponsorProfile = SponsorProfile {
+    sponsorKey:     sponsorKey,
+    metadataDigest: metadataDigest,
+    isWhitelisted:  true
+  };
 
-    // Check if sponsor is already registered
-    const isAlreadyAuthorized = authorizedSponsors.get(sponsorPk);
-    assert(!isAlreadyAuthorized, "SPONSOR_ALREADY_AUTHORIZED");
+  verifiedSponsors.insert(sponsorKey, profile);
+  activeSponsorCounter.increment(1);
+}
 
-    // Update public ledger state
-    authorizedSponsors.set(sponsorPk, true);
-    sponsorMetadataHashes.set(sponsorPk, metadataHash);
-    activeSponsorCount = activeSponsorCount + 1;
+export circuit revokeSponsor(sponsorKey: Bytes<32>): [] {
+  const profile: SponsorProfile = verifiedSponsors.lookup(sponsorKey) as SponsorProfile;
+  assert profile.isWhitelisted "SPONSOR_NOT_WHITELISTED: Target sponsor is not active";
 
-    disclose(sponsorPk);
-  }
+  const updated: SponsorProfile = SponsorProfile {
+    sponsorKey:     profile.sponsorKey,
+    metadataDigest: profile.metadataDigest,
+    isWhitelisted:  false
+  };
 
-  // --------------------------------------------------------------------------
-  // CIRCUIT 2: Verify Sponsor Credential in ZK
-  // Evaluates sponsor public key authorization without disclosing internal keys.
-  // --------------------------------------------------------------------------
-  export circuit verifySponsorCredential(
-    sponsorPk: Bytes<32>
-  ): Boolean {
-    const isAuthorized = authorizedSponsors.get(sponsorPk);
-    assert(isAuthorized, "UNAUTHORIZED_SPONSOR_CREDENTIAL");
-
-    disclose(isAuthorized);
-    return isAuthorized;
-  }
-
-  // --------------------------------------------------------------------------
-  // CIRCUIT 3: Revoke Sponsor Authorization
-  // Admin circuit to revoke sponsor access in case of regulatory updates.
-  // --------------------------------------------------------------------------
-  export circuit revokeSponsor(
-    callerAdminPk: Bytes<32>,
-    sponsorPk: Bytes<32>
-  ): [] {
-    assert(callerAdminPk == adminPk, "UNAUTHORIZED_ADMIN_CALLER");
-    const isAuthorized = authorizedSponsors.get(sponsorPk);
-    assert(isAuthorized, "SPONSOR_NOT_FOUND");
-
-    authorizedSponsors.set(sponsorPk, false);
-    activeSponsorCount = activeSponsorCount - 1;
-
-    disclose(sponsorPk);
-  }
+  verifiedSponsors.insert(sponsorKey, updated);
 }

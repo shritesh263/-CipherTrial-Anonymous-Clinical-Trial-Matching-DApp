@@ -1,73 +1,59 @@
 // ============================================================================
-// MIDNIGHT COMPACT SMART CONTRACT: TRIAL ESCROW BOUNTY
-// Language Version: Compact >= 0.20.0
-// Manages sponsor token escrow locks and participant bounty payouts on Midnight.
+// TRIAL ESCROW BOUNTY SMART CONTRACT
+// Language: Compact (Midnight Blockchain ZK Smart Contract Language)
+// Pragma:   language_version 0.23
+// Network:  Midnight Preprod Testnet
 // ============================================================================
 
-pragma language_version >= 0.20.0;
+pragma language_version 0.23;
 
-export contract TrialEscrowBounty {
-  // --------------------------------------------------------------------------
-  // PUBLIC LEDGER STATE
-  // --------------------------------------------------------------------------
-  // Escrow balance per trialId: Map<TrialId, BalanceDUST>
-  public escrowBalances: Map<Uint<64>, Uint<128>>;
+import CompactStandardLibrary;
 
-  // Bounty payout per verified match per trialId
-  public bountyPerMatch: Map<Uint<64>, Uint<64>>;
+export struct EscrowVault {
+  trialId:         Bytes<32>;
+  sponsorKey:      Bytes<32>;
+  bountyPerMatch:  Uint<64>;
+  totalAllocated:  Uint<64>;
+  totalClaimed:    Uint<64>;
+  isFunded:        Boolean;
+}
 
-  // Claimed payouts per nullifier: Map<NullifierHash, Boolean>
-  public claimedBounties: Map<Bytes<32>, Boolean>;
+// Public Ledger State
+export ledger trialEscrows: Map<Bytes<32>, EscrowVault>;
+export ledger totalBountyDistributed: Counter;
+export ledger claimedBountyNullifiers: Map<Bytes<32>, Boolean>;
 
-  // --------------------------------------------------------------------------
-  // CONSTRUCTOR
-  // --------------------------------------------------------------------------
-  constructor() {}
+// Circuits
+export circuit fundTrialEscrow(
+  trialId:        Bytes<32>,
+  sponsorKey:     Bytes<32>,
+  bountyPerMatch: Uint<64>,
+  totalFunding:   Uint<64>
+): [] {
+  assert totalFunding >= bountyPerMatch "INVALID_FUNDING: Total funding must cover at least one match bounty";
 
-  // --------------------------------------------------------------------------
-  // CIRCUIT 1: Deposit Sponsor Escrow
-  // Locks tDUST / NIGHT token rewards for a given trialId.
-  // --------------------------------------------------------------------------
-  export circuit depositSponsorEscrow(
-    trialId: Uint<64>,
-    depositAmount: Uint<128>,
-    perMatchBounty: Uint<64>
-  ): [] {
-    const currentBalance = escrowBalances.get(trialId);
-    const newBalance = currentBalance + depositAmount;
+  const vault: EscrowVault = EscrowVault {
+    trialId:        trialId,
+    sponsorKey:     sponsorKey,
+    bountyPerMatch: bountyPerMatch,
+    totalAllocated: totalFunding,
+    totalClaimed:   0,
+    isFunded:       true
+  };
 
-    escrowBalances.set(trialId, newBalance);
-    bountyPerMatch.set(trialId, perMatchBounty);
+  trialEscrows.insert(trialId, vault);
+}
 
-    disclose(trialId);
-  }
+export circuit claimMatchBounty(
+  trialId:   Bytes<32>,
+  nullifier: Bytes<32>
+): [] {
+  const vault: EscrowVault = trialEscrows.lookup(trialId) as EscrowVault;
+  assert vault.isFunded "ESCROW_UNFUNDED: Target trial escrow is not funded";
 
-  // --------------------------------------------------------------------------
-  // CIRCUIT 2: Claim Participant Bounty with ZK Proof
-  // Releases participant bounty upon valid nullifier proof submission.
-  // --------------------------------------------------------------------------
-  export circuit claimParticipantBounty(
-    trialId: Uint<64>,
-    nullifierHash: Bytes<32>,
-    isProofValid: Boolean
-  ): Uint<64> {
-    assert(isProofValid, "INVALID_ZK_PROOF");
+  const alreadyClaimed: Boolean = claimedBountyNullifiers.lookup(nullifier) as Boolean;
+  assert !alreadyClaimed "BOUNTY_ALREADY_CLAIMED: Nullifier has already claimed this trial bounty";
 
-    // Verify nullifier has not already claimed bounty
-    const hasClaimed = claimedBounties.get(nullifierHash);
-    assert(!hasClaimed, "BOUNTY_ALREADY_CLAIMED_FOR_NULLIFIER");
-
-    // Retrieve escrow balance and match payout
-    const balance = escrowBalances.get(trialId);
-    const payout = bountyPerMatch.get(trialId);
-
-    assert(balance >= payout, "INSUFFICIENT_ESCROW_BALANCE");
-
-    // Deduct payout from escrow balance
-    escrowBalances.set(trialId, balance - payout);
-    claimedBounties.set(nullifierHash, true);
-
-    disclose(nullifierHash);
-    return payout;
-  }
+  claimedBountyNullifiers.insert(nullifier, true);
+  totalBountyDistributed.increment(1);
 }
