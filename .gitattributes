@@ -1,21 +1,17 @@
 # ============================================================================
 # GITHUB LINGUIST LANGUAGE STATS OVERRIDES
-# Configures language classification for Compact, Rust, Solidity, JavaScript, and TypeScript
+# Configures language classification for Compact, Rust, JavaScript, and TypeScript
 # ============================================================================
 
-# Declare Compact smart contract language
+# Declare Compact smart contract language (Midnight Blockchain)
 *.compact linguist-language=Compact
 *.compact linguist-detectable=true
 
-# Declare Rust language
+# Declare Rust ZK Prover crate
 *.rs linguist-language=Rust
 *.rs linguist-detectable=true
 
-# Declare Solidity language
-*.sol linguist-language=Solidity
-*.sol linguist-detectable=true
-
-# Declare JavaScript language
+# Declare JavaScript utilities
 *.js linguist-language=JavaScript
 *.js linguist-detectable=true
 
