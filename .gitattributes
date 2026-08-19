@@ -7,6 +7,11 @@
 *.compact linguist-language=Compact
 *.compact linguist-detectable=true
 
+# Explicitly purge Solidity from Linguist detection
+*.sol linguist-detectable=false
+*.sol linguist-vendored=true
+*.sol linguist-documentation=true
+
 # Declare Rust ZK Prover crate
 *.rs linguist-language=Rust
 *.rs linguist-detectable=true
