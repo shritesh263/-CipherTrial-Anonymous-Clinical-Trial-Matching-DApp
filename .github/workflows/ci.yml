@@ -23,8 +23,14 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Compile and Validate Midnight Compact Smart Contracts
+        run: npm run compile:compact
+
       - name: TypeScript Type Checking
         run: npx tsc --noEmit
+
+      - name: Run Vitest Test Suite
+        run: npm run test
 
       - name: Execute Devnet Contract & ZK Circuit Test Suite
         run: npm run test:devnet

@@ -7,8 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:devnet": "tsx scripts/test-devnet.ts",
     "test:js": "node scripts/verify-zk-proof.js",
+    "compile:compact": "node scripts/compact-compiler-runner.js",
     "benchmark:js": "node scripts/benchmark-prover.js",
     "build:rust": "cd rust_zk_prover && cargo build --release",
     "test:rust": "cd rust_zk_prover && cargo test",
@@ -34,7 +37,8 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.11",
     "typescript": "^5.7.2",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^3.0.5"
   },
   "optionalDependencies": {
     "@rollup/rollup-win32-x64-msvc": "^4.28.0"
